@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visitor Counter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .visitor-count {
+            font-size: 24px;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+        }
+        .counter {
+            font-weight: bold;
+            font-size: 28px;
+            color: #ff6600;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to My Website!</h1>
+    
+    <div class="visitor-count">
+        <h2>Congratulations!</h2>
+        <p>You are visitor number <span class="counter" id="visits">Loading...</span></p>
+    </div>
+
+    <script>
+        // Use CountAPI (free counter service)
+        // Create a unique namespace for your counter
+        const namespace = "orlov-phd-visitor-counter";
+        const key = "visitors";
+        
+        // Function to get and update the counter
+        function updateCounter() {
+            fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('visits').innerText = data.value;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('visits').innerText = 'Error loading count';
+                });
+        }
+        
+        // Update counter when page loads
+        window.addEventListener('load', updateCounter);
+    </script>
+</body>
+</html>
