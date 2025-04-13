@@ -33,22 +33,42 @@
     </div>
 
     <script>
-        // Use CountAPI (free counter service)
-        // Create a unique namespace for your counter
-        const namespace = "orlov-phd-visitor-counter";
-        const key = "visitors";
+        // Create a unique namespace with random string to avoid conflicts
+        const siteId = "site_" + window.location.hostname.replace(/[^a-z0-9]/gi, '_');
         
-        // Function to get and update the counter
+        // Try alternative API endpoint
         function updateCounter() {
-            fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`)
-                .then(response => response.json())
+            // Use alternative format with more specific namespace
+            fetch(`https://api.countapi.xyz/hit/${siteId}/visits`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('visits').innerText = data.value;
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('visits').innerText = 'Error loading count';
+                    // Fall back to localStorage counter if API fails
+                    useLocalCounter();
                 });
+        }
+        
+        // Fallback to localStorage if the API fails
+        function useLocalCounter() {
+            // Get current global count from localStorage or start at 1
+            let count = parseInt(localStorage.getItem('visitorCount') || '0');
+            
+            // Check if this is a new session
+            if (!sessionStorage.getItem('counted')) {
+                count += 1;
+                localStorage.setItem('visitorCount', count);
+                sessionStorage.setItem('counted', 'true');
+            }
+            
+            document.getElementById('visits').innerText = count;
         }
         
         // Update counter when page loads
