@@ -25,6 +25,51 @@
       z-index: 2;
       text-align: center;
     }
+    .note-box {
+      margin-top: 40px;
+      z-index: 2;
+      position: relative;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+    }
+    
+    textarea {
+      width: 100%;
+      font-family: sans-serif;
+      font-size: 1em;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      resize: none;
+    }
+    
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1em;
+      font-weight: bold;
+      border-radius: 10px;
+      border: none;
+      background-color: #ff69b4;
+      color: white;
+      cursor: pointer;
+    }
+    
+    #noteList {
+      margin-top: 30px;
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    
+    .note {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
     @keyframes gradient {
       0% {background-position: 0% 50%;}
       50% {background-position: 100% 50%;}
@@ -54,6 +99,11 @@
   </style>
 </head>
 <body>
+  <div class="note-box">
+    <textarea id="noteInput" placeholder="Leave a note..." rows="3"></textarea><br>
+    <button onclick="submitNote()">Submit</button>
+    <div id="noteList"></div>
+  </div>
   <div class="message">
     <h1>🎉 Congratulations! 🎉</h1>
     <h1 id="visitor-count">Loading...</h1>
@@ -82,7 +132,7 @@
       .then(result => {
         const count = result.snapshot.val();
         document.getElementById('visitor-count').innerText =
-          `🎉 Congratulations! You are visitor #${count}! 🎉`;
+          `You are visitor #${count}!`;
         launchConfetti();
       });
 
@@ -117,6 +167,42 @@
 
       draw();
     }
+
+    function submitNote() {
+      const note = document.getElementById('noteInput').value.trim();
+      if (!note) return;
+    
+      const notesRef = db.ref("notes");
+      const newNote = {
+        text: note,
+        timestamp: Date.now()
+      };
+      notesRef.push(newNote);
+    
+      document.getElementById('noteInput').value = '';
+    }
+    
+    function loadNotes() {
+      const notesRef = db.ref("notes").limitToLast(50); // get last 50 notes
+      notesRef.on("value", snapshot => {
+        const noteList = document.getElementById("noteList");
+        noteList.innerHTML = '';
+        const notes = snapshot.val();
+        if (notes) {
+          const sorted = Object.values(notes).sort((a, b) => a.timestamp - b.timestamp);
+          for (const note of sorted) {
+            const div = document.createElement("div");
+            div.className = "note";
+            div.innerText = note.text;
+            noteList.appendChild(div);
+          }
+        }
+      });
+    }
+    
+    // Load notes when the page loads
+    loadNotes();
+
   </script>
 </body>
 </html>
