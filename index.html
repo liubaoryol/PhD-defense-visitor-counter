@@ -125,14 +125,7 @@ h1 {
   </style>
 </head>
 <body>
-  <div class="note-box">
-    <textarea id="noteInput" placeholder="Leave a note..." rows="3"></textarea><br>
-    <button onclick="submitNote()">Submit</button>
-  </div>
-  
-  <div class="note-section">
-    <div id="noteList"></div>
-  </div>
+
   <div class="message">
     <h1>🎉 Congratulations! 🎉</h1>
     <h1 id="visitor-count">Loading...</h1>
@@ -140,6 +133,14 @@ h1 {
 <!--   <h1 id="visitor-count">Loading...</h1> -->
   <canvas class="confetti" id="confetti"></canvas>
 
+    <div class="note-box">
+    <textarea id="noteInput" placeholder="Leave a note..." rows="3"></textarea><br>
+    <button onclick="submitNote()">Submit</button>
+  </div>
+  
+  <div class="note-section">
+    <div id="noteList"></div>
+  </div>
   <script>
     // Paste your Firebase config here
     const firebaseConfig = {
