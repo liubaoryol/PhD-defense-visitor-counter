@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RW4T Mini Rescue</title>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 2px;
+            margin: 10px auto;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 350px;
+        }
+        .cell {
+            width: 100%;
+            height: 100%;
+            background-color: #e9e9e9;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 20px;
+            aspect-ratio: 1/1;
+        }
+        .wall {
+            background-color: #444;
+            position: relative;
+        }
+        .wall::before {
+            content: "🚧";
+            font-size: 24px;
+        }
+        .victim {
+            background-color: #ffd1d1;
+        }
+        .victim::before {
+            content: "🤕";
+            font-size: 24px;
+        }
+        .rescued {
+            background-color: #d1ffd1;
+        }
+        .rescued::before {
+            content: "😊";
+            font-size: 24px;
+        }
+        .human-position::after {
+            content: "👩‍⚕️";
+            font-size: 28px;
+            position: absolute;
+            z-index: 10;
+        }
+        .robot-position::after {
+            content: "🤖";
+            font-size: 28px;
+            position: absolute;
+            z-index: 10;
+        }
+        .controls-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px auto;
+            gap: 15px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5px;
+            width: 180px;
+        }
+        .fatigue-indicator {
+            display: flex;
+            align-items: center;
+            background-color: #dfe9ff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .fatigue-level {
+            margin-left: 5px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4a89dc;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        button:hover {
+            background-color: #3b6fc5;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .empty-btn {
+            visibility: hidden;
+        }
+        #play-again {
+            background-color: #28a745;
+        }
+        .status {
+            margin-top: 15px;
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 60px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .celebration {
+            font-size: 24px;
+            color: #28a745;
+            text-align: center;
+            margin-top: 10px;
+        }
+        /* Game end overlay styles */
+        .game-end-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 8px;
+            display: none;
+        }
+        .victory-message {
+            color: #28a745;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+        .game-over-message {
+            color: #dc3545;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+        .final-score {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .score-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffc107;
+            margin: 0 5px;
+        }
+        .play-again-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            min-height: 44px;
+            min-width: 120px;
+        }
+        .play-again-button:hover {
+            background-color: #218838;
+        }
+        /* Confetti styles */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .instructions {
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        /* Media queries for mobile optimization */
+        @media (max-width: 480px) {
+            .game-grid {
+                max-width: 280px;
+            }
+            .controls {
+                width: 150px;
+            }
+            .controls-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            button {
+                font-size: 16px;
+            }
+            .metrics {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+            .victory-message, .game-over-message {
+                font-size: 28px;
+            }
+            .final-score {
+                font-size: 20px;
+            }
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <h1>Disaster Response Team</h1>
+    
+    <div class="game-container">
+        <div class="instructions">
+            <p><strong>Goal:</strong> 🚑 Rescue all injured people (🤕) while avoiding radiation zones (☢️) when possible. Work with your robot teammate 🤖 to complete the mission! 👩‍⚕️</p>
+        </div>
+        
+        <div class="game-grid" id="game-grid"></div>
+        
+        <div class="controls-container">
+            <div class="controls">
+                <button class="empty-btn"></button>
+                <button id="up">↑</button>
+                <button class="empty-btn"></button>
+                <button id="left">←</button>
+                <button id="play-again">Play again</button>
+                <button id="right">→</button>
+                <button class="empty-btn"></button>
+                <button id="down">↓</button>
+                <button class="empty-btn"></button>
+            </div>
+            <div class="fatigue-indicator">
+                <span>🔋 Fatigue:</span>
+                <span id="fatigue-level" class="fatigue-level">Low</span>
+            </div>
+        </div>
+        
+        <div class="metrics">
+            <div>⏱️ Turns: <span id="turns">0</span></div>
+            <div>🚑 Rescued: <span id="victims">0/0</span></div>
+            <div>🤖 Mode: <span id="robot-mode">Rescue</span></div>
+        </div>
+        
+        <div class="status" id="status">
+            <p>🚨 Mission started! Coordinate with the robot to rescue all victims! 🚨</p>
+        </div>
+        
+        <!-- Game end overlay -->
+        <div class="game-end-overlay" id="game-end-overlay">
+            <div class="victory-message" id="victory-message">Mission Complete!</div>
+            <div class="game-over-message" id="game-over-message">Game Over</div>
+            <div class="final-score">Score: <span class="score-number" id="final-score">0</span> points</div>
+            <button class="play-again-button" id="play-again-overlay">Play Again</button>
+        </div>
+        
+        <!-- Canvas for confetti effect -->
+        <canvas id="confetti-canvas"></canvas>
+    </div>
+
+    <script>
+        // DOM Elements
+        const gameGrid = document.getElementById('game-grid');
+        const statusEl = document.getElementById('status');
+        const turnsEl = document.getElementById('turns');
+        const victimsEl = document.getElementById('victims');
+        const robotModeEl = document.getElementById('robot-mode');
+        
+        // Control buttons
+        const upBtn = document.getElementById('up');
+        const leftBtn = document.getElementById('left');
+        const rightBtn = document.getElementById('right');
+        const downBtn = document.getElementById('down');
+        const playAgainBtn = document.getElementById('play-again');
+        const playAgainOverlayBtn = document.getElementById('play-again-overlay');
+        
+        // Game end overlay elements
+        const gameEndOverlay = document.getElementById('game-end-overlay');
+        const victoryMessage = document.getElementById('victory-message');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const finalScoreEl = document.getElementById('final-score');
+        
+        // Confetti canvas
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+        
+        // Game state
+        const gridSize = 7;
+        let gameState = {
+            grid: [],
+            humanPos: { x: 0, y: 0 },
+            robotPos: { x: 6, y: 6 },
+            victims: [],
+            radiation: [],
+            turns: 0,
+            victimsSaved: 0,
+            robotModes: ["Rescue"], // Only Rescue mode is available now
+            currentMode: "Rescue",  // Always set to Rescue
+            movesHistory: [],
+            gameOver: false,
+            // Track radiation exposure
+            radiationExposure: 0
+        };
+        
+        // Initialize game
+        function initGame() {
+            // Hide end game overlay if visible
+            gameEndOverlay.style.display = 'none';
+            
+            // Clear confetti
+            if (confettiCanvas) {
+                confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                if (window.confettiAnimationId) {
+                    cancelAnimationFrame(window.confettiAnimationId);
+                    window.confettiAnimationId = null;
+                }
+            }
+            
+            // Reset state
+            gameState = {
+                grid: [],
+                humanPos: { x: 0, y: 0 },
+                robotPos: { x: 6, y: 6 },
+                victims: [],
+                radiation: [],
+                turns: 0,
+                victimsSaved: 0,
+                robotModes: ["Rescue"], // Only Rescue mode is available
+                currentMode: "Rescue",  // Always set to Rescue
+                movesHistory: [],
+                gameOver: false,
+                // Track radiation exposure
+                radiationExposure: 0
+            };
+            
+            // Initialize urgency level
+            window.gameUrgencyLevel = "Low";
+            
+            // Create empty grid
+            gameState.grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+            
+            // Add walls
+            addWalls();
+            
+            // Add injured people (4-6)
+            const numVictims = Math.floor(Math.random() * 3) + 4;
+            for (let i = 0; i < numVictims; i++) {
+                addRandomEntity('victim');
+            }
+            
+            // Add radiation zones (3-5)
+            const numRadiation = Math.floor(Math.random() * 3) + 3;
+            for (let i = 0; i < numRadiation; i++) {
+                addRandomEntity('radiation');
+            }
+            
+            // Render grid
+            renderGrid();
+            
+            // Update metrics
+            updateMetrics();
+            
+            // Reset fatigue to initial value
+            document.getElementById('fatigue-level').textContent = "Low";
+            
+            // Clear status
+            statusEl.innerHTML = '<p>🚨 Mission started! Coordinate with the robot to rescue all victims! 🚨</p>';
+            
+            // Enable controls
+            setControlsEnabled(true);
+            
+            // Reset confetti canvas size
+            resizeConfettiCanvas();
+        }
+        
+        // Resize confetti canvas
+        function resizeConfettiCanvas() {
+            const container = document.querySelector('.game-container');
+            confettiCanvas.width = container.offsetWidth;
+            confettiCanvas.height = container.offsetHeight;
+        }
+        
+        // Add walls to grid
+        function addWalls() {
+            // First place walls
+            const numWalls = Math.floor(Math.random() * 4) + 7; // 7-10 walls for larger grid
+            let attempts = 0;
+            let wallsAdded = 0;
+            
+            while (wallsAdded < numWalls && attempts < 40) {
+                attempts++;
+                let x, y;
+                
+                x = Math.floor(Math.random() * gridSize);
+                y = Math.floor(Math.random() * gridSize);
+                
+                // Skip if cell already has something or is the start/end position
+                if (gameState.grid[y][x] !== 0 || 
+                    (x === 0 && y === 0) || 
+                    (x === gridSize-1 && y === gridSize-1)) {
+                    continue;
+                }
+                
+                // Skip if it's adjacent to the human start position to avoid blocking
+                if (Math.abs(x - gameState.humanPos.x) <= 1 && 
+                    Math.abs(y - gameState.humanPos.y) <= 1) {
+                    continue;
+                }
+                
+                // Temporarily place wall
+                gameState.grid[y][x] = 'wall';
+                
+                // Make sure we're not isolating any part of the grid
+                // We'll start from (0,0) and ensure we can still reach the robot position
+                if (!isAccessible({x: 0, y: 0}, {x: gridSize-1, y: gridSize-1})) {
+                    // This wall causes problems, remove it
+                    gameState.grid[y][x] = 0;
+                    continue;
+                }
+                
+                wallsAdded++;
+            }
+            
+            // After placing walls, verify the grid is fully connected
+            verifyGridConnectivity();
+        }
+        
+        // Ensure all cells are accessible from starting position
+        function verifyGridConnectivity() {
+            // Start from human position and mark all accessible cells
+            const accessible = Array(gridSize).fill().map(() => Array(gridSize).fill(false));
+            const visit = (x, y) => {
+                if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return;
+                if (accessible[y][x] || gameState.grid[y][x] === 'wall') return;
+                
+                accessible[y][x] = true;
+                visit(x+1, y);
+                visit(x-1, y);
+                visit(x, y+1);
+                visit(x, y-1);
+            };
+            
+            visit(0, 0);
+            
+            // Remove any walls that are blocking too much of the grid
+            let accessibleCount = 0;
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (accessible[y][x]) accessibleCount++;
+                }
+            }
+            
+            // If less than 70% of grid is accessible, remove some walls
+            const threshold = gridSize * gridSize * 0.7;
+            if (accessibleCount < threshold) {
+                for (let y = 0; y < gridSize; y++) {
+                    for (let x = 0; x < gridSize; x++) {
+                        if (gameState.grid[y][x] === 'wall' && Math.random() < 0.5) {
+                            gameState.grid[y][x] = 0;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add random entity (victim or radiation)
+        function addRandomEntity(type) {
+            let x, y;
+            let attempts = 0;
+            let valid = false;
+            
+            // Try to find a valid position
+            while (!valid && attempts < 30) {
+                attempts++;
+                x = Math.floor(Math.random() * gridSize);
+                y = Math.floor(Math.random() * gridSize);
+                
+                // Skip if cell already has something or is the start/end position
+                if (gameState.grid[y][x] !== 0 || 
+                    (x === 0 && y === 0) || 
+                    (x === gridSize-1 && y === gridSize-1)) {
+                    continue;
+                }
+                
+                // For radiation, avoid placing next to start position
+                if (type === 'radiation' && 
+                    ((Math.abs(x - 0) + Math.abs(y - 0)) <= 1 || 
+                     (Math.abs(x - (gridSize-1)) + Math.abs(y - (gridSize-1))) <= 1)) {
+                    continue;
+                }
+                
+                // Check if the position would be accessible
+                gameState.grid[y][x] = type;
+                
+                // For victims (first-aid kits), verify they are reachable
+                if (type === 'victim') {
+                    // Verify the kit is reachable from both human and robot starting positions
+                    if (isAccessible({x: 0, y: 0}, {x, y}) && isAccessible({x: gridSize-1, y: gridSize-1}, {x, y})) {
+                        valid = true;
+                    } else {
+                        // Revert the grid cell if not valid
+                        gameState.grid[y][x] = 0;
+                    }
+                } else {
+                    // For radiation, just make sure we don't block critical paths
+                    valid = true;
+                }
+            }
+            
+            // If we found a valid position, add the entity
+            if (valid) {
+                if (type === 'victim') {
+                    gameState.victims.push({ x, y, rescued: false });
+                } else if (type === 'radiation') {
+                    gameState.radiation.push({ x, y });
+                }
+            }
+        }
+        
+        // Check if a target position is accessible from a start position
+        function isAccessible(start, target) {
+            // Simple BFS to check reachability
+            const visited = Array(gridSize).fill().map(() => Array(gridSize).fill(false));
+            const queue = [start];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                
+                // Found the target
+                if (current.x === target.x && current.y === target.y) {
+                    return true;
+                }
+                
+                // Mark as visited
+                visited[current.y][current.x] = true;
+                
+                // Check adjacent cells
+                const directions = [
+                    { x: 0, y: -1 }, // up
+                    { x: 0, y: 1 },  // down
+                    { x: -1, y: 0 }, // left
+                    { x: 1, y: 0 }   // right
+                ];
+                
+                for (const dir of directions) {
+                    const nx = current.x + dir.x;
+                    const ny = current.y + dir.y;
+                    
+                    // Check bounds
+                    if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) continue;
+                    
+                    // Skip visited or walls
+                    if (visited[ny][nx] || gameState.grid[ny][nx] === 'wall') continue;
+                    
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+            
+            return false;
+        }
+        
+        // Render grid
+        function renderGrid() {
+            gameGrid.innerHTML = '';
+            
+            // Create cells
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    
+                    // Apply class based on cell type
+                    if (gameState.grid[y][x] === 'wall') {
+                        cell.classList.add('wall');
+                    } else if (gameState.grid[y][x] === 'victim') {
+                        cell.classList.add('victim');
+                        
+                        // Check if kit is collected
+                        const victim = gameState.victims.find(v => v.x === x && v.y === y);
+                        if (victim && victim.rescued) {
+                            cell.classList.remove('victim');
+                            cell.classList.add('rescued');
+                        }
+                    } else if (gameState.grid[y][x] === 'radiation') {
+                        cell.classList.add('radiation');
+                    }
+                    
+                    // Add human and robot
+                    if (gameState.humanPos.x === x && gameState.humanPos.y === y) {
+                        cell.classList.add('human-position');
+                    }
+                    
+                    if (gameState.robotPos.x === x && gameState.robotPos.y === y) {
+                        cell.classList.add('robot-position');
+                    }
+                    
+                    gameGrid.appendChild(cell);
+                }
+            }
+            
+            // Double check that radiation zones are visible
+            for (const rad of gameState.radiation) {
+                const x = rad.x;
+                const y = rad.y;
+                // Add a custom marker for radiation cells to ensure visibility
+                const cells = gameGrid.querySelectorAll('.cell');
+                const index = y * gridSize + x;
+                if (index >= 0 && index < cells.length) {
+                    cells[index].style.backgroundColor = '#ffcc66';
+                    if (!cells[index].classList.contains('radiation')) {
+                        cells[index].classList.add('radiation');
+                    }
+                }
+            }
+        }
+        
+        // Update metrics
+        function updateMetrics() {
+            turnsEl.textContent = gameState.turns;
+            victimsEl.textContent = `${gameState.victimsSaved}/${gameState.victims.length}`;
+            robotModeEl.textContent = gameState.currentMode;
+        }
+        
+        // Process human movement
+        function moveHuman(direction) {
+            if (gameState.gameOver) return;
+            
+            // Calculate new position
+            let newX = gameState.humanPos.x;
+            let newY = gameState.humanPos.y;
+            
+            switch(direction) {
+                case 'up':
+                    newY = Math.max(0, newY - 1);
+                    break;
+                case 'down':
+                    newY = Math.min(gridSize - 1, newY + 1);
+                    break;
+                case 'left':
+                    newX = Math.max(0, newX - 1);
+                    break;
+                case 'right':
+                    newX = Math.min(gridSize - 1, newX + 1);
+                    break;
+            }
+            
+            // Check if new position is valid
+            if (gameState.grid[newY][newX] !== 'wall') {
+                // Record movement
+                gameState.movesHistory.push({
+                    agent: 'human',
+                    from: { ...gameState.humanPos },
+                    to: { x: newX, y: newY },
+                    turn: gameState.turns
+                });
+                
+                // Update position
+                gameState.humanPos = { x: newX, y: newY };
+                
+                // Check if there's an injured person at this cell
+                const victimIndex = gameState.victims.findIndex(v => 
+                    v.x === newX && v.y === newY && !v.rescued);
+                
+                if (victimIndex >= 0) {
+                    // Rescue person
+                    gameState.victims[victimIndex].rescued = true;
+                    gameState.victimsSaved++;
+                    
+                    // Update log
+                    addStatusMessage(`🎉 You rescued an injured person at (${newX}, ${newY})! 🎉`);
+                }
+                
+                // Check if there's radiation at this cell
+                const isRadiation = gameState.radiation.some(r => 
+                    r.x === newX && r.y === newY);
+                
+                if (isRadiation) {
+                    // Increase radiation exposure
+                    gameState.radiationExposure++;
+                    
+                    // Update fatigue due to radiation
+                    const fatigueLevelEl = document.getElementById('fatigue-level');
+                    if (fatigueLevelEl) {
+                        const fatigueStates = ["Low", "Medium", "High"];
+                        const currentIndex = fatigueStates.indexOf(fatigueLevelEl.textContent);
+                        if (currentIndex < 2) {
+                            fatigueLevelEl.textContent = fatigueStates[currentIndex + 1];
+                        }
+                        
+                        // Update log
+                        addStatusMessage(`⚠️ Warning: You passed through a radiation zone! Fatigue increased to ${fatigueLevelEl.textContent}! ⚠️`);
+                    } else {
+                        // Fallback message if element not found
+                        addStatusMessage(`⚠️ Warning: You passed through a radiation zone! Fatigue increased! ⚠️`);
+                    }
+                }
+                
+                // Increment turn
+                gameState.turns++;
+                
+                // Move robot
+                moveRobot();
+                
+                // Render updated grid
+                renderGrid();
+                
+                // Update metrics
+                updateMetrics();
+                
+                // Check game end
+                checkGameEnd();
+            } else {
+                // Wall, invalid move
+                addStatusMessage("🚧 There's a wall there! You can't move in that direction. 🚧");
+            }
+        }
+        
+        // Move robot (always in Rescue mode)
+        function moveRobot() {
+            // Robot is always in Rescue mode but still need to update latent factors
+            try {
+                updateRobotMode();
+            } catch (error) {
+                console.error("Error in updateRobotMode:", error);
+            }
+            
+            // Get current position
+            const { x, y } = gameState.robotPos;
+            
+            // Default urgency level to "Low" if not available
+            let urgencyLevel = "Low";
+            try {
+                urgencyLevel = window.gameUrgencyLevel || "Low";
+            } catch (error) {
+                console.error("Error getting urgency level:", error);
+            }
+            
+            // Get fatigue level - use a safer approach
+            let fatigueLevel = "Low";
+            const fatigueLevelEl = document.getElementById('fatigue-level');
+            if (fatigueLevelEl) {
+                fatigueLevel = fatigueLevelEl.textContent;
+            }
+            
+            // Calculate next move based on Rescue mode
+            let newX = x;
+            let newY = y;
+            
+            // Softmax temperature based on fatigue (higher fatigue = more random decisions)
+            const temperature = fatigueLevel === "High" ? 5.0 : 
+                               fatigueLevel === "Medium" ? 2.0 : 1.0;
+            
+            // Find closest injured person
+            const unrescuedVictims = gameState.victims.filter(v => !v.rescued);
+            if (unrescuedVictims.length > 0) {
+                // Calculate distances and values for each person
+                const victimValues = unrescuedVictims.map(victim => {
+                    const distance = Math.abs(victim.x - x) + Math.abs(victim.y - y);
+                    
+                    // Base value is inverse of distance
+                    let value = 10 - distance;
+                    
+                    // If urgency is low, penalize victims near radiation
+                    if (urgencyLevel === "Low") {
+                        gameState.radiation.forEach(rad => {
+                            const radDistance = Math.abs(victim.x - rad.x) + Math.abs(victim.y - rad.y);
+                            if (radDistance < 2) {
+                                value -= 3;
+                            }
+                        });
+                    }
+                    
+                    return { victim, value };
+                });
+                
+                // Apply softmax to get probabilities
+                const expVictimValues = victimValues.map(vv => Math.exp(vv.value / temperature));
+                const sumVictimExp = expVictimValues.reduce((a, b) => a + b, 0);
+                const victimProbs = expVictimValues.map(v => v / sumVictimExp);
+                
+                // Choose victim based on probabilities
+                const randVictim = Math.random();
+                let cumVictimProb = 0;
+                let chosenVictim = null;
+                
+                for (let i = 0; i < victimProbs.length; i++) {
+                    cumVictimProb += victimProbs[i];
+                    if (randVictim <= cumVictimProb) {
+                        chosenVictim = victimValues[i].victim;
+                        break;
+                    }
+                }
+                
+                if (chosenVictim) {
+                    // Move one step toward the chosen victim
+                    if (Math.abs(chosenVictim.x - x) > Math.abs(chosenVictim.y - y)) {
+                        newX = x + (chosenVictim.x > x ? 1 : -1);
+                    } else {
+                        newY = y + (chosenVictim.y > y ? 1 : -1);
+                    }
+                    
+                    // Check if it's a wall
+                    if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && 
+                        gameState.grid[newY][newX] === 'wall') {
+                        // Try the other direction
+                        if (Math.abs(chosenVictim.x - x) > Math.abs(chosenVictim.y - y)) {
+                            newX = x;
+                            newY = y + (chosenVictim.y > y ? 1 : -1);
+                        } else {
+                            newX = x + (chosenVictim.x > x ? 1 : -1);
+                            newY = y;
+                        }
+                        
+                        // If still a wall, don't move
+                        if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && 
+                            gameState.grid[newY][newX] === 'wall') {
+                            newX = x;
+                            newY = y;
+                        }
+                    }
+                }
+            } else {
+                // No victims left, follow human
+                const { x: hx, y: hy } = gameState.humanPos;
+                
+                // Move toward human
+                if (Math.abs(hx - x) > Math.abs(hy - y)) {
+                    newX = x + (hx > x ? 1 : -1);
+                } else {
+                    newY = y + (hy > y ? 1 : -1);
+                }
+                
+                // Check if it's a wall
+                if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && 
+                    gameState.grid[newY][newX] === 'wall') {
+                    // Try the other direction
+                    if (Math.abs(hx - x) > Math.abs(hy - y)) {
+                        newX = x;
+                        newY = y + (hy > y ? 1 : -1);
+                    } else {
+                        newX = x + (hx > x ? 1 : -1);
+                        newY = y;
+                    }
+                    
+                    // If still a wall, don't move
+                    if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && 
+                        gameState.grid[newY][newX] === 'wall') {
+                        newX = x;
+                        newY = y;
+                    }
+                }
+            }
+            
+            // Check grid bounds
+            newX = Math.max(0, Math.min(gridSize - 1, newX));
+            newY = Math.max(0, Math.min(gridSize - 1, newY));
+            
+            // Check if it's a wall
+            if (gameState.grid[newY][newX] === 'wall') {
+                // Don't move through walls
+                newX = x;
+                newY = y;
+            }
+            
+            // Update position if changed
+            if (newX !== x || newY !== y) {
+                // Record movement
+                gameState.movesHistory.push({
+                    agent: 'robot',
+                    from: { ...gameState.robotPos },
+                    to: { x: newX, y: newY },
+                    turn: gameState.turns
+                });
+                
+                // Update position
+                gameState.robotPos = { x: newX, y: newY };
+                
+                // Check if there's an injured person at this cell
+                const victimIndex = gameState.victims.findIndex(v => 
+                    v.x === newX && v.y === newY && !v.rescued);
+                
+                if (victimIndex >= 0) {
+                    // Rescue person
+                    gameState.victims[victimIndex].rescued = true;
+                    gameState.victimsSaved++;
+                    
+                    // Update log
+                    addStatusMessage(`🎉 Robot rescued an injured person at (${newX}, ${newY})! 🎉`);
+                }
+                
+                // Check if robot is in radiation zone and update message
+                if (gameState.radiation.some(r => r.x === newX && r.y === newY)) {
+                    // High urgency means robot doesn't care about radiation
+                    const currentUrgencyLevel = window.gameUrgencyLevel || "Low";
+                    if (currentUrgencyLevel === "High") {
+                        addStatusMessage(`⚠️ Robot moved through radiation zone due to high urgency! ⚠️`);
+                    } else {
+                        addStatusMessage(`⚠️ Robot avoided radiation zone when possible due to ${currentUrgencyLevel.toLowerCase()} urgency. ⚠️`);
+                    }
+                }
+            }
+        }
+        
+        // Update robot mode - No longer needed as we only use Rescue mode
+        function updateRobotMode() {
+            // Robot is always in Rescue mode
+            gameState.currentMode = "Rescue";
+            
+            // Update latent factors (FAMM model)
+            const urgencyLevelEl = document.getElementById('urgency-level');
+            const fatigueLevelEl = document.getElementById('fatigue-level');
+            
+            // Update urgency based on remaining time and victims
+            if (gameState.turns > 0 && gameState.turns % 4 === 0) {
+                const unrescuedVictims = gameState.victims.filter(v => !v.rescued);
+                if (gameState.turns > 15 && unrescuedVictims.length > gameState.victims.length / 2) {
+                    urgencyLevelEl.textContent = "High";
+                } else if (gameState.turns > 10) {
+                    urgencyLevelEl.textContent = "Medium";
+                } else {
+                    urgencyLevelEl.textContent = "Low";
+                }
+            }
+            
+            // Update fatigue based on moves and radiation exposure
+            if (gameState.turns > 0 && gameState.turns % 5 === 0) {
+                const fatigueStates = ["Low", "Medium", "High"];
+                const currentIndex = fatigueStates.indexOf(fatigueLevelEl.textContent);
+                
+                // Increase fatigue over time and with radiation exposure
+                if (gameState.turns > 15 || gameState.radiationExposure > 2) {
+                    const newIndex = Math.min(currentIndex + 1, 2);
+                    fatigueLevelEl.textContent = fatigueStates[newIndex];
+                }
+            }
+        }
+        
+        // Add message to status log
+        function addStatusMessage(message) {
+            const msgElement = document.createElement('p');
+            msgElement.textContent = `${message}`;
+            statusEl.appendChild(msgElement);
+            
+            // Auto-scroll to latest message
+            statusEl.scrollTop = statusEl.scrollHeight;
+        }
+        
+        // Enable/disable controls
+        function setControlsEnabled(enabled) {
+            upBtn.disabled = !enabled;
+            leftBtn.disabled = !enabled;
+            rightBtn.disabled = !enabled;
+            downBtn.disabled = !enabled;
+        }
+        
+        // Create confetti effect
+        function createConfetti() {
+            // Clear any existing confetti
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            if (window.confettiAnimationId) {
+                cancelAnimationFrame(window.confettiAnimationId);
+            }
+            
+            const confettiCount = 200;
+            const confettiColors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+            const confettiPieces = [];
+            
+            // Setup canvas
+            resizeConfettiCanvas();
+            
+            // Create confetti pieces
+            for (let i = 0; i < confettiCount; i++) {
+                confettiPieces.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * -confettiCanvas.height,
+                    size: Math.random() * 10 + 5,
+                    color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+                    rotation: Math.random() * 360,
+                    speed: Math.random() * 3 + 2,
+                    rotationSpeed: Math.random() * 10 - 5
+                });
+            }
+            
+            // Animate confetti
+            function animateConfetti() {
+                confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                
+                let stillFalling = false;
+                
+                for (const piece of confettiPieces) {
+                    // Update position
+                    piece.y += piece.speed;
+                    piece.rotation += piece.rotationSpeed;
+                    
+                    // Check if piece is still falling
+                    if (piece.y < confettiCanvas.height) {
+                        stillFalling = true;
+                    }
+                    
+                    // Draw the piece
+                    confettiCtx.save();
+                    confettiCtx.translate(piece.x, piece.y);
+                    confettiCtx.rotate(piece.rotation * Math.PI / 180);
+                    confettiCtx.fillStyle = piece.color;
+                    confettiCtx.fillRect(-piece.size / 2, -piece.size / 2, piece.size, piece.size);
+                    confettiCtx.restore();
+                }
+                
+                // Continue animation if pieces are still falling
+                if (stillFalling) {
+                    window.confettiAnimationId = requestAnimationFrame(animateConfetti);
+                } else {
+                    cancelAnimationFrame(window.confettiAnimationId);
+                    window.confettiAnimationId = null;
+                }
+            }
+            
+            // Start animation
+            window.confettiAnimationId = requestAnimationFrame(animateConfetti);
+        }
+        
+        // Check game end
+        function checkGameEnd() {
+            // Victory: all injured people rescued
+            if (gameState.victimsSaved === gameState.victims.length) {
+                gameState.gameOver = true;
+                setControlsEnabled(false);
+                
+                // Calculate score based on turns, radiation exposure, and fatigue
+                const baseScore = 1000;
+                const turnPenalty = gameState.turns * 5;
+                const radiationPenalty = gameState.radiationExposure * 50;
+                
+                // Get fatigue level safely
+                let fatigueLevel = "Low";
+                const fatigueLevelEl = document.getElementById('fatigue-level');
+                if (fatigueLevelEl) {
+                    fatigueLevel = fatigueLevelEl.textContent;
+                }
+                
+                // Bonus for keeping fatigue low
+                const fatigueBonus = fatigueLevel === "Low" ? 200 : 
+                                    fatigueLevel === "Medium" ? 100 : 0;
+                
+                const finalScore = baseScore - turnPenalty - radiationPenalty + fatigueBonus;
+                
+                // Calculate optimal path
+                const optimalPathLength = calculateOptimalPath();
+                const efficiencyRatio = Math.round((optimalPathLength / gameState.turns) * 100);
+                
+                // Show victory message and final score
+                victoryMessage.style.display = 'block';
+                gameOverMessage.style.display = 'none';
+                finalScoreEl.textContent = finalScore;
+                gameEndOverlay.style.display = 'flex';
+                
+                // Create confetti effect
+                createConfetti();
+                
+                // Add status messages
+                addStatusMessage(`🎉 Great job! All injured people rescued in ${gameState.turns} turns! 🎉`);
+                addStatusMessage(`🏆 Optimal path length: ${optimalPathLength} turns. Your efficiency: ${efficiencyRatio}% 🏆`);
+                addStatusMessage(`💯 Final score: ${finalScore} points 💯`);
+                addStatusMessage(`⚠️ Radiation exposure: ${gameState.radiationExposure} (penalty: -${radiationPenalty}) ⚠️`);
+                addStatusMessage(`🔋 Fatigue level: ${fatigueLevel} (bonus: +${fatigueBonus}) 🔋`);
+                
+                return true;
+            }
+            
+            // Game over if fatigue gets too high
+            if (document.getElementById('fatigue-level')?.textContent === "High" && 
+                gameState.radiationExposure > 3) {
+                gameState.gameOver = true;
+                setControlsEnabled(false);
+                
+                // Calculate score based on turns, radiation exposure, and fatigue
+                const baseScore = 500;
+                const turnPenalty = gameState.turns * 5;
+                const radiationPenalty = gameState.radiationExposure * 50;
+                const victimBonus = gameState.victimsSaved * 100;
+                
+                const finalScore = baseScore - turnPenalty - radiationPenalty + victimBonus;
+                
+                // Show game over message and final score
+                victoryMessage.style.display = 'none';
+                gameOverMessage.style.display = 'block';
+                finalScoreEl.textContent = finalScore;
+                gameEndOverlay.style.display = 'flex';
+                
+                // Add status messages
+                addStatusMessage(`⚠️ Mission failed: Radiation exposure led to critical fatigue levels! ⚠️`);
+                addStatusMessage(`🩹 You rescued ${gameState.victimsSaved} of ${gameState.victims.length} injured people. 🩹`);
+                addStatusMessage(`💯 Final score: ${finalScore} points 💯`);
+                addStatusMessage(`⚠️ Radiation exposure: ${gameState.radiationExposure} (penalty: -${radiationPenalty}) ⚠️`);
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // Calculate optimal path length (simplified version)
+        function calculateOptimalPath() {
+            // In a real implementation, we would use pathfinding algorithms
+            // like A* to find the shortest path to rescue all people
+            // For this demo, we'll use a simplified estimate
+            
+            // Start from human position
+            const startPos = { x: 0, y: 0 };
+            
+            // Get all unrescued people
+            const victims = gameState.victims.map(v => ({ x: v.x, y: v.y }));
+            
+            // Simple greedy algorithm - always go to closest person
+            let currentPos = { ...startPos };
+            let totalDistance = 0;
+            
+            // While there are people left to rescue
+            while (victims.length > 0) {
+                // Find closest person
+                let closestVictimIndex = 0;
+                let closestDistance = Infinity;
+                
+                for (let i = 0; i < victims.length; i++) {
+                    const distance = Math.abs(victims[i].x - currentPos.x) + 
+                                    Math.abs(victims[i].y - currentPos.y);
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestVictimIndex = i;
+                    }
+                }
+                
+                // Add distance to the person
+                totalDistance += closestDistance;
+                
+                // Move to the person
+                currentPos = { ...victims[closestVictimIndex] };
+                
+                // Remove the person
+                victims.splice(closestVictimIndex, 1);
+            }
+            
+            // This is a lower bound - in reality, walls would increase the path length
+            // Let's add a 20% overhead to account for walls and deviations
+            return Math.round(totalDistance * 1.2);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', resizeConfettiCanvas);
+        
+        // Assign events to buttons
+        upBtn.addEventListener('click', () => moveHuman('up'));
+        leftBtn.addEventListener('click', () => moveHuman('left'));
+        rightBtn.addEventListener('click', () => moveHuman('right'));
+        downBtn.addEventListener('click', () => moveHuman('down'));
+        playAgainBtn.addEventListener('click', initGame);
+        playAgainOverlayBtn.addEventListener('click', initGame);
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (gameState.gameOver) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    moveHuman('up');
+                    break;
+                case 'ArrowDown':
+                    moveHuman('down');
+                    break;
+                case 'ArrowLeft':
+                    moveHuman('left');
+                    break;
+                case 'ArrowRight':
+                    moveHuman('right');
+                    break;
+            }
+        });
+        
+        // Start game
+        initGame();
+    </script>
+</body>
+</html>
