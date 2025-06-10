@@ -560,16 +560,17 @@
 
   <script>
     // Visitor Counter Firebase code
-    const firebaseConfig = {
-      //Solo agrega el apiKey aqui 
-      apiKey: "QcOudthHEvGQaxxOlGngF97iRbtEJ5gwmqFgF20U",
-      authDomain: "phd-counter.firebaseapp.com",
-      projectId: "phd-counter",
-      storageBucket: "phd-counter.firebasestorage.app",
-      messagingSenderId: "99758170250",
-      appId: "1:99758170250:web:974b5b7bb2bd372e110d73",
-      measurementId: "G-NM03NEQJQ9"
-    };
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCOac43XOl_dPvlqJfbqTr_cONnQ71Weqc",
+    authDomain: "phd-counter.firebaseapp.com",
+    databaseURL: "https://phd-counter-default-rtdb.firebaseio.com",
+    projectId: "phd-counter",
+    storageBucket: "phd-counter.firebasestorage.app",
+    messagingSenderId: "99758170250",
+    appId: "1:99758170250:web:974b5b7bb2bd372e110d73",
+    measurementId: "G-NM03NEQJQ9"
+};
 
     firebase.initializeApp(firebaseConfig);
     console.log("Firebase config:", firebaseConfig);
